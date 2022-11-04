@@ -10,6 +10,7 @@ datasource db {
   url      = "file:./db.sqlite"
 }
 
-model Guild {
-  id Int @id
+model Settings {
+  guild_id            Int  @id
+  suggestions_channel Int?
 }
