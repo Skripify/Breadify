@@ -11,6 +11,7 @@ datasource db {
 }
 
 model Guild {
-  id                  Int  @id
-  suggestions_channel Int?
+  id                  String   @id
+  suggestions_channel String?
+  suggestion_threads  Boolean?
 }
