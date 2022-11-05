@@ -10,6 +10,7 @@ import { colors } from "../../config";
 import { Interaction } from "../../types/Interaction";
 import { Status } from "../../features/suggestions";
 import { StatusMessage } from "../../interfaces/StatusMessages";
+import { Bot } from "../../structures/Client";
 
 export default {
   data: new SlashCommandBuilder()
@@ -43,7 +44,7 @@ export default {
           option
             .setName("channel")
             .setDescription("The channel to set as the suggestion channel.")
-            .setRequired(true)
+            .setRequired(false)
         )
         .addBooleanOption((option) =>
           option
@@ -60,10 +61,9 @@ export default {
         .setDescription("Accept a suggestion.")
         .addStringOption((option) =>
           option
-            .setName("suggestion")
+            .setName("message_id")
             .setDescription("The suggestion to accept.")
             .setRequired(true)
-            .setAutocomplete(true)
         )
     )
     .addSubcommand((subcommand) =>
@@ -72,50 +72,12 @@ export default {
         .setDescription("Deny a suggestion.")
         .addStringOption((option) =>
           option
-            .setName("suggestion")
+            .setName("message_id")
             .setDescription("The suggestion to deny.")
             .setRequired(true)
-            .setAutocomplete(true)
         )
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-  autocomplete: async ({ client, interaction }) => {
-    client.db.ensure(interaction.guild.id, {
-      suggestions: {
-        channel: null,
-        threads: false,
-      },
-    });
-
-    const data = client.db.get(interaction.guild.id, "suggestions");
-
-    const channel: TextChannel | undefined =
-      (await interaction.guild.channels.cache.get(data.channel)) as TextChannel;
-
-    if (!channel) return;
-
-    const focusedValue = interaction.options.getFocused();
-    const choices = await channel.messages.fetch();
-
-    const filtered = await Promise.all(
-      choices
-        .filter((msg) => msg.id.startsWith(focusedValue))
-        .map(async ({ id }) => ({
-          id,
-          message: await channel.messages
-            .fetch(id)
-            .then((msg) => msg.embeds[0].description)
-            .catch(() => "???"),
-        }))
-    );
-
-    await interaction.respond(
-      filtered.map(({ id, message }) => ({
-        name: `${message} (${id})`,
-        value: id,
-      }))
-    );
-  },
   execute: async ({ client, interaction }) => {
     client.db.ensure(interaction.guild.id, {
       suggestion: {
@@ -143,21 +105,71 @@ export default {
         ],
         ephemeral: true,
       });
-    } else if (subcommand === "accept") setStatus(interaction, Status.ACCEPTED);
-    else if (subcommand === "deny") setStatus(interaction, Status.DENIED);
+    } else if (subcommand === "update") {
+      const channel = interaction.options.getChannel("channel");
+      const threads = interaction.options.getBoolean("threads");
+
+      if (channel)
+        client.db.set(interaction.guild.id, channel.id, "suggestions.channel");
+      if (threads)
+        client.db.set(interaction.guild.id, threads, "suggestions.threads");
+
+      interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              "The suggestion system has successfully been updated!"
+            )
+            .setColor(colors.success),
+        ],
+        ephemeral: true,
+      });
+    } else if (subcommand === "accept")
+      setStatus(client, interaction, Status.ACCEPTED);
+    else if (subcommand === "deny")
+      setStatus(client, interaction, Status.DENIED);
   },
 } as Command;
 
-async function setStatus(interaction: Interaction, status: StatusMessage) {
-  const msg = await interaction.options.getString("suggestion");
+async function setStatus(
+  client: Bot,
+  interaction: Interaction,
+  status: StatusMessage
+) {
+  const channel = client.db.get(interaction.guild.id, "suggestions.channel");
 
-  const targetMsg = await interaction.channel.messages.fetch(msg);
+  if (!channel)
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription("The suggestion system isn't set up.")
+          .setColor(colors.fail),
+      ],
+    });
+
+  const textChannel = interaction.guild.channels.cache.get(
+    channel
+  ) as TextChannel;
+
+  if (!textChannel)
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription("The suggestions channel was deleted.")
+          .setColor(colors.fail),
+      ],
+    });
+
+  const msg = await interaction.options.getString("message_id");
+  const targetMsg = await textChannel.messages.fetch(msg);
 
   if (!targetMsg)
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
-          .setDescription("That suggestion was deleted by a moderator.")
+          .setDescription(
+            "The message ID specified is invalid or the message was deleted by someone."
+          )
           .setColor(colors.fail),
       ],
     });
@@ -177,6 +189,8 @@ async function setStatus(interaction: Interaction, status: StatusMessage) {
     .setColor(status.color);
 
   targetMsg.edit({ embeds: [embed], components: [] });
+
+  if (!targetMsg.thread.archived) targetMsg.thread.setArchived(true);
 
   interaction.reply({
     embeds: [

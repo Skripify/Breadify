@@ -84,6 +84,11 @@ export default new Feature((client) => {
               downvoted: [],
             },
           });
+
+          if (threads)
+            msg.startThread({
+              name: content,
+            });
         });
     }
   });
