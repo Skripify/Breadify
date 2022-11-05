@@ -102,7 +102,11 @@ export default new Feature((client) => {
     const user = await prisma.user.findFirst({
       where: {
         id: i.user.id,
-        suggestion_id: i.message.id,
+        suggestion: {
+          some: {
+            id: i.message.id,
+          },
+        },
       },
     });
 
@@ -120,10 +124,20 @@ export default new Feature((client) => {
       return;
     }
 
-    await prisma.user.create({
-      data: {
+    await prisma.user.upsert({
+      where: {
         id: i.user.id,
-        suggestion_id: i.message.id,
+      },
+      create: {
+        id: i.user.id,
+        suggestion: {
+          connect: { id: i.message.id },
+        },
+      },
+      update: {
+        suggestion: {
+          connect: { id: i.message.id },
+        },
       },
     });
 

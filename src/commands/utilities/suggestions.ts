@@ -4,9 +4,13 @@ import {
   EmbedBuilder,
   PermissionFlagsBits,
   ChannelType,
+  TextChannel,
 } from "discord.js";
 import { prisma } from "../../utils/db";
 import { colors } from "../../config";
+import { Interaction } from "../../types/Interaction";
+import { Status } from "../../features/suggestions";
+import { StatusMessage } from "../../interfaces/StatusMessages";
 
 export default {
   data: new SlashCommandBuilder()
@@ -51,7 +55,72 @@ export default {
             .setRequired(false)
         )
     )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("accept")
+        .setDescription("Accept a suggestion.")
+        .addStringOption((option) =>
+          option
+            .setName("suggestion")
+            .setDescription("The suggestion to accept.")
+            .setRequired(true)
+            .setAutocomplete(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("deny")
+        .setDescription("Deny a suggestion.")
+        .addStringOption((option) =>
+          option
+            .setName("suggestion")
+            .setDescription("The suggestion to deny.")
+            .setRequired(true)
+            .setAutocomplete(true)
+        )
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  autocomplete: async ({ interaction }) => {
+    const { suggestions_channel } = await prisma.guild.findFirst({
+      where: {
+        id: interaction.guild.id,
+      },
+      select: {
+        suggestions_channel: true,
+      },
+    });
+
+    const channel = (await interaction.guild.channels.cache.get(
+      suggestions_channel
+    )) as TextChannel;
+
+    if (!channel) return;
+
+    const focusedValue = interaction.options.getFocused();
+    const choices = await prisma.suggestion.findMany({
+      select: {
+        id: true,
+      },
+    });
+    const filtered = await Promise.all(
+      choices
+        .filter((choice) => choice.id.startsWith(focusedValue))
+        .map(async ({ id }) => ({
+          id,
+          message: await channel.messages
+            .fetch(id)
+            .then((msg) => msg.embeds[0].description)
+            .catch(() => "???"),
+        }))
+    );
+
+    await interaction.respond(
+      filtered.map(({ id, message }) => ({
+        name: `${message} (${id})`,
+        value: id,
+      }))
+    );
+  },
   execute: async ({ interaction }) => {
     const subcommand = interaction.options.getSubcommand();
 
@@ -84,6 +153,53 @@ export default {
         ],
         ephemeral: true,
       });
-    }
+    } else if (subcommand === "accept") setStatus(interaction, Status.ACCEPTED);
+    else if (subcommand === "deny") setStatus(interaction, Status.DENIED);
   },
 } as Command;
+
+async function setStatus(interaction: Interaction, status: StatusMessage) {
+  const msg = await interaction.options.getString("suggestion");
+
+  await prisma.suggestion.delete({
+    where: {
+      id: msg,
+    },
+  });
+
+  const targetMsg = await interaction.channel.messages.fetch(msg);
+
+  if (!targetMsg)
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription("That suggestion was deleted by a moderator.")
+          .setColor(colors.fail),
+      ],
+    });
+
+  const oldEmbed = targetMsg.embeds[0];
+
+  const embed = new EmbedBuilder()
+    .setAuthor({
+      name: oldEmbed.author.name,
+      iconURL: oldEmbed.author.iconURL,
+    })
+    .setDescription(oldEmbed.description)
+    .setFields({
+      name: "Status",
+      value: status.text,
+    })
+    .setColor(status.color);
+
+  targetMsg.edit({ embeds: [embed], components: [] });
+
+  interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setDescription("Suggestion has successfully been updated!")
+        .setColor(colors.success),
+    ],
+    ephemeral: true,
+  });
+}
