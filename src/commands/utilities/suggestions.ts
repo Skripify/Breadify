@@ -6,7 +6,6 @@ import {
   ChannelType,
   TextChannel,
 } from "discord.js";
-import { prisma } from "../../utils/db";
 import { colors } from "../../config";
 import { Interaction } from "../../types/Interaction";
 import { Status } from "../../features/suggestions";
@@ -80,31 +79,27 @@ export default {
         )
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-  autocomplete: async ({ interaction }) => {
-    const { suggestions_channel } = await prisma.guild.findFirst({
-      where: {
-        id: interaction.guild.id,
-      },
-      select: {
-        suggestions_channel: true,
+  autocomplete: async ({ client, interaction }) => {
+    client.db.ensure(interaction.guild.id, {
+      suggestions: {
+        channel: null,
+        threads: false,
       },
     });
 
-    const channel = (await interaction.guild.channels.cache.get(
-      suggestions_channel
-    )) as TextChannel;
+    const data = client.db.get(interaction.guild.id, "suggestions");
+
+    const channel: TextChannel | undefined =
+      (await interaction.guild.channels.cache.get(data.channel)) as TextChannel;
 
     if (!channel) return;
 
     const focusedValue = interaction.options.getFocused();
-    const choices = await prisma.suggestion.findMany({
-      select: {
-        id: true,
-      },
-    });
+    const choices = await channel.messages.fetch();
+
     const filtered = await Promise.all(
       choices
-        .filter((choice) => choice.id.startsWith(focusedValue))
+        .filter((msg) => msg.id.startsWith(focusedValue))
         .map(async ({ id }) => ({
           id,
           message: await channel.messages
@@ -121,27 +116,22 @@ export default {
       }))
     );
   },
-  execute: async ({ interaction }) => {
+  execute: async ({ client, interaction }) => {
+    client.db.ensure(interaction.guild.id, {
+      suggestion: {
+        channel: null,
+        threads: false,
+      },
+    });
+
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "setup") {
       const channel = interaction.options.getChannel("channel");
       const threads = interaction.options.getBoolean("threads") ?? false;
 
-      await prisma.guild.upsert({
-        where: {
-          id: interaction.guild.id,
-        },
-        create: {
-          id: interaction.guild.id,
-          suggestions_channel: channel.id,
-          suggestion_threads: threads,
-        },
-        update: {
-          suggestions_channel: channel.id,
-          suggestion_threads: threads,
-        },
-      });
+      client.db.set(interaction.guild.id, channel.id, "suggestions.channel");
+      client.db.set(interaction.guild.id, threads, "suggestions.threads");
 
       interaction.reply({
         embeds: [
@@ -160,12 +150,6 @@ export default {
 
 async function setStatus(interaction: Interaction, status: StatusMessage) {
   const msg = await interaction.options.getString("suggestion");
-
-  await prisma.suggestion.delete({
-    where: {
-      id: msg,
-    },
-  });
 
   const targetMsg = await interaction.channel.messages.fetch(msg);
 
