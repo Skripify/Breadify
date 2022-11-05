@@ -4,4 +4,4 @@ dist/
 package-lock.json
 yarn-error.log
 .env
-prisma/db.sqlite
+db/*.sqlite*

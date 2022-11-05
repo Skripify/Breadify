@@ -13,11 +13,16 @@ import { importFile } from "../utils/functions";
 import logger from "../utils/logger";
 import { Event } from "./Event";
 import { Feature } from "./Feature";
+import Enmap from "enmap";
 
 type BotOptions = Omit<ClientOptions, "intents">;
 
 export class Bot extends Client {
   commands: Collection<string, Command> = new Collection();
+
+  db = new Enmap("db", {
+    dataDir: "./db",
+  });
 
   constructor(options?: BotOptions) {
     super({

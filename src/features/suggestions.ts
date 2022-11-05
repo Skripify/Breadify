@@ -8,7 +8,6 @@ import {
 import { colors } from "../config";
 import { StatusMessages } from "../interfaces/StatusMessages";
 import { Feature } from "../structures/Feature";
-import { prisma } from "../utils/db";
 
 export const Status: StatusMessages = {
   WAITING: {
@@ -40,16 +39,15 @@ const buttons = [
 
 export default new Feature((client) => {
   client.on("messageCreate", async (message) => {
-    const { suggestions_channel: channel, suggestion_threads: threads } =
-      await prisma.guild.findFirst({
-        where: {
-          id: message.guild.id,
-        },
-        select: {
-          suggestions_channel: true,
-          suggestion_threads: true,
-        },
-      });
+    client.db.ensure(message.guild.id, {
+      suggestions: {
+        channel: null,
+        threads: false,
+      },
+    });
+
+    const channel = client.db.get(message.guild.id, "suggestions.channel");
+    const threads = client.db.get(message.guild.id, "suggestions.channel");
 
     if (channel && channel === message.channel.id && !message.author.bot) {
       const { channel, member, content } = message;
@@ -77,15 +75,16 @@ export default new Feature((client) => {
             new ActionRowBuilder<ButtonBuilder>().addComponents(buttons),
           ],
         })
-        .then(
-          async (msg) =>
-            await prisma.suggestion.create({
-              data: {
-                id: msg.id,
-                guild_id: msg.guild.id,
-              },
-            })
-        );
+        .then((msg) => {
+          client.db.set(msg.id, {
+            upvotes: 0,
+            downvotes: 0,
+            users: {
+              upvoted: [],
+              downvoted: [],
+            },
+          });
+        });
     }
   });
 
@@ -93,63 +92,60 @@ export default new Feature((client) => {
     if (!i.isButton()) return;
     if (!["yes", "no"].includes(i.customId)) return;
 
-    const suggestion = await prisma.suggestion.findFirst({
-      where: {
-        id: i.message.id,
+    client.db.ensure(i.message.id, {
+      upvotes: 0,
+      downvotes: 0,
+      users: {
+        upvoted: [],
+        downvoted: [],
       },
     });
 
-    const user = await prisma.user.findFirst({
-      where: {
-        id: i.user.id,
-        suggestion: {
-          some: {
-            id: i.message.id,
-          },
-        },
-      },
-    });
+    let suggestion = client.db.get(i.message.id);
 
-    if (!suggestion) return;
+    if (i.customId === "yes") {
+      if (suggestion.users.upvoted.includes(i.user.id)) {
+        i.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription("You can't vote on a suggestion more than once.")
+              .setColor(colors.fail),
+          ],
+          ephemeral: true,
+        });
+        return;
+      }
 
-    if (user) {
-      i.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setDescription("You can't vote on a suggestion more than once.")
-            .setColor(colors.fail),
-        ],
-        ephemeral: true,
-      });
-      return;
+      if (suggestion.users.downvoted.includes(i.user.id)) {
+        client.db.math(i.message.id, "-", 1, "downvotes");
+        client.db.remove(i.message.id, i.user.id, "users.downvoted");
+      }
+
+      client.db.math(i.message.id, "+", 1, "upvotes");
+      client.db.push(i.message.id, i.user.id, "users.upvoted");
+    } else if (i.customId === "no") {
+      if (suggestion.users.downvoted.includes(i.user.id)) {
+        i.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription("You can't vote on a suggestion more than once.")
+              .setColor(colors.fail),
+          ],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (suggestion.users.upvoted.includes(i.user.id)) {
+        client.db.math(i.message.id, "-", 1, "upvotes");
+        client.db.remove(i.message.id, i.user.id, "users.upvoted");
+      }
+
+      client.db.math(i.message.id, "+", 1, "downvotes");
+      client.db.push(i.message.id, i.user.id, "users.downvoted");
     }
 
-    await prisma.user.upsert({
-      where: {
-        id: i.user.id,
-      },
-      create: {
-        id: i.user.id,
-        suggestion: {
-          connect: { id: i.message.id },
-        },
-      },
-      update: {
-        suggestion: {
-          connect: { id: i.message.id },
-        },
-      },
-    });
-
-    if (i.customId === "yes") suggestion.upvotes += 1;
-    else if (i.customId === "no") suggestion.downvotes += 1;
-
-    await prisma.suggestion.update({
-      where: {
-        id: i.message.id,
-      },
-      data: suggestion,
-    });
+    suggestion = client.db.get(i.message.id);
 
     i.update({
       embeds: i.message.embeds,
