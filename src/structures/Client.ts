@@ -12,6 +12,7 @@ import { Command } from "../interfaces/Command";
 import { importFile } from "../utils/functions";
 import logger from "../utils/logger";
 import { Event } from "./Event";
+import { Feature } from "./Feature";
 
 type BotOptions = Omit<ClientOptions, "intents">;
 
@@ -20,7 +21,13 @@ export class Bot extends Client {
 
   constructor(options?: BotOptions) {
     super({
-      intents: ["Guilds", "GuildMembers", "GuildPresences"],
+      intents: [
+        "Guilds",
+        "GuildMessages",
+        "MessageContent",
+        "GuildMembers",
+        "GuildPresences",
+      ],
       ...options,
     });
   }
@@ -31,6 +38,7 @@ export class Bot extends Client {
 
     this.registerCommands();
     this.registerEvents();
+    this.registerFeatures("../features/");
 
     this.login(process.env.TOKEN).catch(() => {
       return logger.error("The token you provided is invalid.");
@@ -109,5 +117,20 @@ export class Bot extends Client {
     }
 
     logger.success(`Loaded ${eventFiles.length} events.`);
+  }
+
+  async registerFeatures(dir: string) {
+    const files = fs.readdirSync(path.join(__dirname, dir));
+    for (const file of files) {
+      const stat = fs.lstatSync(path.join(__dirname, dir, file));
+
+      if (stat.isDirectory()) this.registerFeatures(path.join(dir, file));
+      else {
+        const feature: Feature = await importFile(
+          path.join(__dirname, dir, file)
+        );
+        feature.run(this);
+      }
+    }
   }
 }

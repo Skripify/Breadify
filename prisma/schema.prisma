@@ -11,7 +11,23 @@ datasource db {
 }
 
 model Guild {
-  id                  String   @id
+  id                  String       @id
   suggestions_channel String?
   suggestion_threads  Boolean?
+  suggestions         Suggestion[]
+}
+
+model User {
+  id            String      @id
+  suggestion    Suggestion? @relation(fields: [suggestion_id], references: [id])
+  suggestion_id String?
+}
+
+model Suggestion {
+  id        String @id
+  guild     Guild  @relation(fields: [guild_id], references: [id])
+  guild_id  String
+  upvotes   Int    @default(0)
+  downvotes Int    @default(0)
+  voters    User[]
 }
