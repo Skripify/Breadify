@@ -18,8 +18,8 @@ export default {
     .setDescription("Everything related to the suggestions system.")
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("setup")
-        .setDescription("Setup the suggestions system.")
+        .setName("enable")
+        .setDescription("Enable the suggestions system.")
         .addChannelOption((option) =>
           option
             .setName("channel")
@@ -35,6 +35,11 @@ export default {
             )
             .setRequired(false)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("disable")
+        .setDescription("Disable the suggestions system.")
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -88,7 +93,7 @@ export default {
 
     const subcommand = interaction.options.getSubcommand();
 
-    if (subcommand === "setup") {
+    if (subcommand === "enable") {
       const channel = interaction.options.getChannel("channel");
       const threads = interaction.options.getBoolean("threads") ?? false;
 
@@ -99,7 +104,21 @@ export default {
         embeds: [
           new EmbedBuilder()
             .setDescription(
-              "The suggestion system has successfully been setup!"
+              "The suggestion system has successfully been enabled!"
+            )
+            .setColor(colors.success),
+        ],
+        ephemeral: true,
+      });
+    } else if (subcommand === "disable") {
+      client.db.set(interaction.guild.id, null, "suggestions.channel");
+      client.db.set(interaction.guild.id, false, "suggestions.threads");
+
+      interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              "The suggestions system has successfully been disabled!"
             )
             .setColor(colors.success),
         ],

@@ -16,7 +16,8 @@
     "discord.js": "^14.6.0",
     "dotenv": "^16.0.3",
     "enmap": "^5.9.2",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "popcat.js": "^1.0.2"
   },
   "devDependencies": {
     "@types/node": "^18.11.9",
