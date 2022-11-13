@@ -14,11 +14,14 @@ import logger from "../utils/logger";
 import { Event } from "./Event";
 import { Feature } from "./Feature";
 import Enmap from "enmap";
+import { Snipe } from "../interfaces/Snipe";
 
 type BotOptions = Omit<ClientOptions, "intents">;
 
 export class Bot extends Client {
   commands: Collection<string, Command> = new Collection();
+
+  snipes: Collection<string, Snipe[]> = new Collection();
 
   db = new Enmap("db", {
     dataDir: "./db",
