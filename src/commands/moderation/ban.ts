@@ -4,18 +4,18 @@ import { colors } from "../../config";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("kick")
-    .setDescription("Kick a member from the server.")
+    .setName("ban")
+    .setDescription("Ban a member from the server.")
     .addUserOption((option) =>
       option
         .setName("member")
-        .setDescription("The member to kick.")
+        .setDescription("The member to ban.")
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName("reason")
-        .setDescription("The reason why you're kicking this member.")
+        .setDescription("The reason why you're banning this member.")
         .setRequired(false)
     ),
   execute: async ({ interaction }) => {
@@ -34,7 +34,7 @@ export default {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("You can't kick yourself.")
+            .setDescription("You can't ban yourself.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
@@ -47,18 +47,18 @@ export default {
         embeds: [
           new EmbedBuilder()
             .setDescription(
-              "You can't kick a member that has a higher/equal role to you."
+              "You can't ban a member that has a higher/equal role to you."
             )
             .setColor(colors.fail),
         ],
         ephemeral: true,
       });
 
-    if (!member.kickable)
+    if (!member.bannable)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("I can't kick that member.")
+            .setDescription("I can't ban that member.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
@@ -67,13 +67,13 @@ export default {
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
 
-    member.kick(reason);
+    member.ban({ reason });
 
     interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setDescription(
-            `**${member.user.tag}** has been kicked from the server!\n> **Reason**: ${reason}`
+            `**${member.user.tag}** has been banned from the server!\n> **Reason**: ${reason}`
           )
           .setColor(colors.success),
       ],
