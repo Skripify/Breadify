@@ -49,7 +49,7 @@ export default new Feature((client) => {
     });
 
     const data = client.db.get(message.author.id, "afk");
-    if (data) {
+    if (data.is_afk) {
       client.db.set(message.author.id, false, "afk.is_afk");
       client.db.set(message.author.id, null, "afk.reason");
       client.db.set(message.author.id, null, "afk.timestamp");
