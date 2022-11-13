@@ -91,7 +91,7 @@ export class Bot extends Client {
         );
       } else {
         await this.application?.commands.set(commands);
-        logger.info(`Registered ${commands.length} commands globally.`);
+        logger.success(`Registered ${commands.length} commands globally.`);
       }
     });
   }
