@@ -27,6 +27,8 @@ export class Bot extends Client {
     dataDir: "./db",
   });
 
+  startTime: number;
+
   constructor(options?: BotOptions) {
     super({
       intents: [
