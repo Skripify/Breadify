@@ -1,5 +1,9 @@
 import { Command } from "../../interfaces/Command";
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import {
+  EmbedBuilder,
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+} from "discord.js";
 import { colors } from "../../config";
 
 export default {
@@ -17,7 +21,8 @@ export default {
         .setName("reason")
         .setDescription("The reason why you're kicking this member.")
         .setRequired(false)
-    ),
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
   execute: async ({ interaction }) => {
     const member = interaction.options.getMember("member");
     if (!member)
