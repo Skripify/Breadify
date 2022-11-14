@@ -5,6 +5,7 @@ import {
   EmbedBuilder,
   SlashCommandBuilder,
 } from "discord.js";
+import { colors } from "../../config";
 
 const times: APIApplicationCommandOptionChoice<number>[] = [
   {
@@ -37,11 +38,91 @@ export default {
   data: new SlashCommandBuilder()
     .setName("mute")
     .setDescription("Mute a member from the server.")
+    .addUserOption((option) =>
+      option
+        .setName("member")
+        .setDescription("The member to mute.")
+        .setRequired(true)
+    )
     .addNumberOption((option) =>
       option
         .setName("time")
         .setDescription("The amount of time to mute this member for.")
         .setChoices(...times)
         .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
+        .setName("reason")
+        .setDescription("The reason why you're muting this member.")
+        .setRequired(false)
     ),
+  execute: async ({ client, interaction }) => {
+    const member = interaction.options.getMember("member");
+    if (!member)
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("That member is no longer in the server.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
+    if (member === interaction.member)
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("You can't mute yourself.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
+    if (
+      member.roles.highest.position >= interaction.member.roles.highest.position
+    )
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              "You can't mute a member that has a higher/equal role to you."
+            )
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
+    if (!member.manageable)
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("I can't mute that member.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
+    const time = interaction.options.getNumber("time");
+
+    const reason =
+      interaction.options.getString("reason") ?? "No reason specified.";
+
+    member.timeout(time, reason);
+
+    interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription(
+            `**${
+              member.user.tag
+            }** has been muted from the server!\n> **Time:** ${ms(time, {
+              long: true,
+            })}\n> **Reason**: ${reason}`
+          )
+          .setColor(colors.success),
+      ],
+      ephemeral: true,
+    });
+  },
 } as Command;
