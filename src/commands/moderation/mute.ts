@@ -3,8 +3,8 @@ import ms from "ms";
 import {
   APIApplicationCommandOptionChoice,
   EmbedBuilder,
-  PermissionFlagsBits,
   SlashCommandBuilder,
+  PermissionFlagsBits,
 } from "discord.js";
 import { colors } from "../../config";
 
