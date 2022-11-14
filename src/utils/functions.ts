@@ -25,3 +25,7 @@ export function getRow(cur: number, embeds: EmbedBuilder[]) {
 export function capitalize(str: string) {
   return str[0].toUpperCase() + str.toLowerCase().slice(1).replace(/_/gi, " ");
 }
+
+export function truncate(source: string, size: number) {
+  return source.length > size ? source.slice(0, size - 1) + "…" : source;
+}

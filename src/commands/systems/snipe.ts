@@ -1,6 +1,7 @@
 import { Command } from "../../interfaces/Command";
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import { colors } from "../../config";
+import { truncate } from "../../utils/functions";
 
 export default {
   data: new SlashCommandBuilder()
@@ -45,7 +46,7 @@ export default {
         name: msg.author.tag,
         iconURL: msg.author.displayAvatarURL(),
       })
-      .setDescription(msg.content || null)
+      .setDescription(truncate(msg.content, 128) || null)
       .setImage(image)
       .setColor(colors.main)
       .setFooter({
