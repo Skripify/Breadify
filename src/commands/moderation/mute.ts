@@ -3,6 +3,7 @@ import ms from "ms";
 import {
   APIApplicationCommandOptionChoice,
   EmbedBuilder,
+  PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 import { colors } from "../../config";
@@ -56,7 +57,8 @@ export default {
         .setName("reason")
         .setDescription("The reason why you're muting this member.")
         .setRequired(false)
-    ),
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
   execute: async ({ client, interaction }) => {
     const member = interaction.options.getMember("member");
     if (!member)
