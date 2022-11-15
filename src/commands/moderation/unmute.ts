@@ -8,22 +8,22 @@ import { colors } from "../../config";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("ban")
-    .setDescription("Ban a member from the server.")
+    .setName("unmute")
+    .setDescription("Unmute a member from the server.")
     .addUserOption((option) =>
       option
         .setName("member")
-        .setDescription("The member to ban.")
+        .setDescription("The member to unmute.")
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName("reason")
-        .setDescription("The reason why you're banning this member.")
+        .setDescription("The reason why you're unmuting this member.")
         .setRequired(false)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-  execute: async ({ interaction }) => {
+    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+  execute: async ({ client, interaction }) => {
     const member = interaction.options.getMember("member");
     if (!member)
       return interaction.reply({
@@ -39,7 +39,7 @@ export default {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("You can't ban yourself.")
+            .setDescription("You can't unmute yourself.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
@@ -52,18 +52,28 @@ export default {
         embeds: [
           new EmbedBuilder()
             .setDescription(
-              "You can't ban a member that has a higher/equal role to you."
+              "You can't unmute a member that has a higher/equal role to you."
             )
             .setColor(colors.fail),
         ],
         ephemeral: true,
       });
 
-    if (!member.bannable)
+    if (!member.moderatable)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("I can't ban that member.")
+            .setDescription("I can't unmute that member.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
+    if (!member.isCommunicationDisabled())
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("That member is already unmuted.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
@@ -72,13 +82,13 @@ export default {
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
 
-    member.ban({ reason });
+    member.timeout(null, reason);
 
     interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setDescription(
-            `**${member.user.tag}** has been banned from the server!\n> **Reason**: ${reason}`
+            `**${member.user.tag}** has been unmuted from the server!\n> **Reason**: ${reason}`
           )
           .setColor(colors.success),
       ],
