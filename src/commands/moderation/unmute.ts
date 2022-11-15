@@ -69,10 +69,20 @@ export default {
         ephemeral: true,
       });
 
+    if (!member.isCommunicationDisabled())
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("That member is already unmuted.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
 
-    member.timeout(0, reason);
+    member.timeout(null, reason);
 
     interaction.reply({
       embeds: [
