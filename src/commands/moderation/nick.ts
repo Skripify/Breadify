@@ -8,38 +8,30 @@ import { colors } from "../../config";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("unmute")
-    .setDescription("Unmute a member from the server.")
+    .setName("nick")
+    .setDescription("Change the nickname of a member.")
     .addUserOption((option) =>
       option
         .setName("member")
-        .setDescription("The member to unmute.")
+        .setDescription("The member to change the nickname of.")
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
-        .setName("reason")
-        .setDescription("The reason why you're unmuting this member.")
+        .setName("nickname")
+        .setDescription("The nickname to set.")
         .setRequired(false)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames),
   execute: async ({ client, interaction }) => {
     const member = interaction.options.getMember("member");
+    const nickname = interaction.options.getString("nickname") ?? null;
+
     if (!member)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setDescription("That member is no longer in the server.")
-            .setColor(colors.fail),
-        ],
-        ephemeral: true,
-      });
-
-    if (member === interaction.member)
-      return interaction.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setDescription("You can't unmute yourself.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
@@ -59,40 +51,49 @@ export default {
         ephemeral: true,
       });
 
-    if (!member.moderatable)
+    if (!member.manageable)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("I can't unmute that member.")
+            .setDescription("I can't change the nickname of that member.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
       });
 
-    if (!member.isCommunicationDisabled())
+    if (nickname === null && !member.nickname)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setDescription("That member is already unmuted.")
+            .setDescription("That member doesn't have a nickname.")
             .setColor(colors.fail),
         ],
         ephemeral: true,
       });
 
-    const reason =
-      interaction.options.getString("reason") ?? "No reason specified.";
+    const oldName = member.nickname ?? "None";
 
-    member.timeout(null, reason);
+    member.setNickname(nickname);
 
-    interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setDescription(
-            `**${member.user.tag}** has been unmuted from the server!\n> **Reason**: ${reason}`
-          )
-          .setColor(colors.success),
-      ],
-      ephemeral: true,
-    });
+    if (nickname === null)
+      interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(`**${member.user.tag}**'s nickname has been reset!`)
+            .setColor(colors.success),
+        ],
+        ephemeral: true,
+      });
+    else
+      interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              `**${member.user.tag}**'s nickname has been changed!\n> **Original nickname**: ${oldName}\n> **New nickname**: ${nickname}`
+            )
+            .setColor(colors.success),
+        ],
+        ephemeral: true,
+      });
   },
 } as Command;

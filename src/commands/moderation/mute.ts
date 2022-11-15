@@ -95,7 +95,7 @@ export default {
         ephemeral: true,
       });
 
-    if (!member.manageable)
+    if (!member.moderatable)
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
