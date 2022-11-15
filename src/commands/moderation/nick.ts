@@ -23,7 +23,7 @@ export default {
         .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames),
-  execute: async ({ client, interaction }) => {
+  execute: async ({ interaction }) => {
     const member = interaction.options.getMember("member");
     const nickname = interaction.options.getString("nickname") ?? null;
 
