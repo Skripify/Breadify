@@ -25,7 +25,7 @@ export default {
         .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-  execute: async ({ client, interaction }) => {
+  execute: async ({ interaction }) => {
     const member = interaction.options.getUser("member");
     if (!member)
       return interaction.reply({
