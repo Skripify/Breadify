@@ -12,7 +12,6 @@ export default {
     .setName("links")
     .setDescription("See all the links related to the bot."),
   execute: async ({ client, interaction }) => {
-    // TODO: make this prettier later
     interaction.reply({
       components: [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
