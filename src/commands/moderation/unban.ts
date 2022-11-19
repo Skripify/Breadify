@@ -39,8 +39,9 @@ export default {
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
 
-    try {
-      interaction.guild.members.unban(member.id, reason).then((user) => {
+    interaction.guild.members
+      .unban(member.id, reason)
+      .then((user) => {
         interaction.reply({
           embeds: [
             new EmbedBuilder()
@@ -51,16 +52,16 @@ export default {
           ],
           ephemeral: true,
         });
+      })
+      .catch(() => {
+        interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription("That member isn't banned in the server.")
+              .setColor(colors.fail),
+          ],
+          ephemeral: true,
+        });
       });
-    } catch {
-      return interaction.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setDescription("That member isn't banned in the server.")
-            .setColor(colors.fail),
-        ],
-        ephemeral: true,
-      });
-    }
   },
 } as Command;
