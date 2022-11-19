@@ -5,14 +5,13 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { colors, emotes } from "../../config";
+import { emotes } from "../../config";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("links")
-    .setDescription("See all the links related to the bot."),
+    .setName("invite")
+    .setDescription("Invite me to your Discord server."),
   execute: async ({ client, interaction }) => {
-    // TODO: make this prettier later
     interaction.reply({
       components: [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -22,12 +21,7 @@ export default {
             .setStyle(ButtonStyle.Link)
             .setURL(
               `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot%20applications.commands&permissions=288782`
-            ),
-          new ButtonBuilder()
-            .setEmoji(emotes.discord)
-            .setLabel("Support server")
-            .setStyle(ButtonStyle.Link)
-            .setURL("https://discord.gg/Txm4FYNpNs")
+            )
         ),
       ],
       ephemeral: true,

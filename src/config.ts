@@ -14,4 +14,6 @@ export const colors: Colors = {
 export const emotes: Emotes = {
   previous: "<:previous:994438542077984768>",
   next: "<:next:994438540429643806>",
+  logo: "<:breadify:1043439122179706932>",
+  discord: "<:discord:1043438510616608779>",
 };

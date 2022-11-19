@@ -14,4 +14,6 @@ export interface Colors {
 export interface Emotes {
   previous: EmojiResolvable;
   next: EmojiResolvable;
+  logo: EmojiResolvable;
+  discord: EmojiResolvable;
 }
