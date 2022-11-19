@@ -5,7 +5,7 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from "discord.js";
-import { colors } from "../config";
+import { colors, emotes } from "../config";
 import { StatusMessages } from "../interfaces/StatusMessages";
 import { Feature } from "../structures/Feature";
 
@@ -27,12 +27,12 @@ export const Status: StatusMessages = {
 const buttons = [
   new ButtonBuilder()
     .setCustomId("yes")
-    .setEmoji("1038272981929046107")
+    .setEmoji(emotes.yes)
     .setLabel("0")
     .setStyle(ButtonStyle.Success),
   new ButtonBuilder()
     .setCustomId("no")
-    .setEmoji("1038272697500704798")
+    .setEmoji(emotes.no)
     .setLabel("0")
     .setStyle(ButtonStyle.Danger),
 ];
