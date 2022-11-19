@@ -5,7 +5,7 @@ import { colors } from "../../config";
 export default {
   data: new SlashCommandBuilder()
     .setName("afk")
-    .setDescription("Everything related to the AFk system.")
+    .setDescription("Everything related to the AFK system.")
     .addSubcommand((subcommand) =>
       subcommand
         .setName("set")
