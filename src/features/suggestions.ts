@@ -1,13 +1,8 @@
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonComponent,
-  ButtonStyle,
-  EmbedBuilder,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder } from "discord.js";
 import { colors, emotes } from "../config";
 import { StatusMessages } from "../interfaces/StatusMessages";
 import { Feature } from "../structures/Feature";
+import { YesAndNoButtons } from "../types/YesAndNoButtons";
 
 export const Status: StatusMessages = {
   WAITING: {
@@ -23,19 +18,6 @@ export const Status: StatusMessages = {
     color: 0xc20808,
   },
 };
-
-const buttons = [
-  new ButtonBuilder()
-    .setCustomId("yes")
-    .setEmoji(emotes.yes)
-    .setLabel("0")
-    .setStyle(ButtonStyle.Success),
-  new ButtonBuilder()
-    .setCustomId("no")
-    .setEmoji(emotes.no)
-    .setLabel("0")
-    .setStyle(ButtonStyle.Danger),
-];
 
 export default new Feature((client) => {
   client.on("messageCreate", async (message) => {
@@ -72,7 +54,9 @@ export default new Feature((client) => {
               .setColor(status.color),
           ],
           components: [
-            new ActionRowBuilder<ButtonBuilder>().addComponents(buttons),
+            new ActionRowBuilder<ButtonBuilder>().addComponents(
+              YesAndNoButtons
+            ),
           ],
         })
         .then((msg) => {
@@ -156,8 +140,8 @@ export default new Feature((client) => {
       embeds: i.message.embeds,
       components: [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
-          buttons[0].setLabel(suggestion.upvotes.toString()),
-          buttons[1].setLabel(suggestion.downvotes.toString())
+          YesAndNoButtons[0].setLabel(suggestion.upvotes.toString()),
+          YesAndNoButtons[1].setLabel(suggestion.downvotes.toString())
         ),
       ],
     });
