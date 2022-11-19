@@ -61,6 +61,10 @@ export default new Feature((client) => {
         })
         .then((msg) => {
           client.db.set(msg.id, {
+            poll: {
+              is_poll: false,
+              starter: null,
+            },
             upvotes: 0,
             downvotes: 0,
             users: {
@@ -82,6 +86,8 @@ export default new Feature((client) => {
     if (!["yes", "no"].includes(i.customId)) return;
 
     client.db.ensure(i.message.id, {
+      poll: false,
+      pollStarter: null,
       upvotes: 0,
       downvotes: 0,
       users: {
@@ -90,7 +96,10 @@ export default new Feature((client) => {
       },
     });
 
+    const isPoll = client.db.get(i.message.id, "poll.is_poll");
     let suggestion = client.db.get(i.message.id);
+
+    if (isPoll) return;
 
     if (i.customId === "yes") {
       if (suggestion.users.upvoted.includes(i.user.id)) {
@@ -144,6 +153,6 @@ export default new Feature((client) => {
           YesAndNoButtons[1].setLabel(suggestion.downvotes.toString())
         ),
       ],
-    });
+    }).catch(() => {});
   });
 });
