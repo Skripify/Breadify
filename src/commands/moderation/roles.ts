@@ -61,7 +61,7 @@ export default {
         )
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-  execute: async ({ client, interaction }) => {
+  execute: async ({ interaction }) => {
     const subcommand = interaction.options.getSubcommand();
     const member = interaction.options.getMember("member");
     if (!member)

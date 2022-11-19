@@ -23,7 +23,7 @@ export default {
         .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-  execute: async ({ client, interaction }) => {
+  execute: async ({ interaction }) => {
     const member = interaction.options.getMember("member");
     if (!member)
       return interaction.reply({
