@@ -16,13 +16,16 @@ export default {
     const member = interaction.options.getUser("member") || interaction.user;
     const invites = await (
       await interaction.guild.invites.fetch()
-    ).filter(({ inviter }) => inviter && inviter.id === member.id).size;
+    )
+      .filter(({ inviter }) => inviter && inviter.id === member.id)
+      .map((inv) => inv.uses)
+      .reduce((a, b) => a + b, 0);
 
     interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setDescription(
-            `**${member.username}** has invited **${invites}** people.`
+            `**${member.tag}** has invited **${invites}** people.`
           )
           .setColor(colors.main),
       ],
