@@ -10,6 +10,7 @@ const client = new Bot({
     roles: [],
     repliedUser: false,
   },
+  shards: "auto",
   presence: {
     activities: [
       {
