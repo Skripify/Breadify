@@ -7,6 +7,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import { colors } from "../../config";
+import logger from "../../utils/logger";
 
 const times: APIApplicationCommandOptionChoice<number>[] = [
   {
@@ -109,6 +110,26 @@ export default {
 
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
+
+    member
+      .send({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              `You have been muted from **${
+                interaction.guild.name
+              }**.\n> **Time:** ${ms(time, {
+                long: true,
+              })}\n> **Reason**: ${reason}`
+            )
+            .setColor(colors.fail),
+        ],
+      })
+      .catch(() => {
+        logger.error(
+          `Couldn't DM ${member.user.tag} because they have their DMs off.`
+        );
+      });
 
     member.timeout(time, reason);
 

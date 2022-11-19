@@ -5,6 +5,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import { colors } from "../../config";
+import logger from "../../utils/logger";
 
 export default {
   data: new SlashCommandBuilder()
@@ -42,6 +43,22 @@ export default {
     interaction.guild.members
       .unban(member.id, reason)
       .then((user) => {
+        user
+          .send({
+            embeds: [
+              new EmbedBuilder()
+                .setDescription(
+                  `You have been unbanned from **${interaction.guild.name}**.\n> **Reason**: ${reason}`
+                )
+                .setColor(colors.fail),
+            ],
+          })
+          .catch(() => {
+            logger.error(
+              `Couldn't DM ${user.tag} because they have their DMs off.`
+            );
+          });
+
         interaction.reply({
           embeds: [
             new EmbedBuilder()

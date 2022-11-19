@@ -5,6 +5,7 @@ import {
   PermissionFlagsBits,
 } from "discord.js";
 import { colors } from "../../config";
+import logger from "../../utils/logger";
 
 export default {
   data: new SlashCommandBuilder()
@@ -71,6 +72,22 @@ export default {
 
     const reason =
       interaction.options.getString("reason") ?? "No reason specified.";
+
+    member
+      .send({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              `You have been banned from **${interaction.guild.name}**.\n> **Reason**: ${reason}`
+            )
+            .setColor(colors.fail),
+        ],
+      })
+      .catch(() => {
+        logger.error(
+          `Couldn't DM ${member.user.tag} because they have their DMs off.`
+        );
+      });
 
     member.ban({ reason });
 
