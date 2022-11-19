@@ -1,0 +1,31 @@
+import { Command } from "../../interfaces/Command";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { colors } from "../../config";
+
+export default {
+  data: new SlashCommandBuilder()
+    .setName("invites")
+    .setDescription("See how many people someone has invited to this server.")
+    .addUserOption((option) =>
+      option
+        .setName("member")
+        .setDescription("The member to view the invites of.")
+        .setRequired(false)
+    ),
+  execute: async ({ interaction }) => {
+    const member = interaction.options.getUser("member") || interaction.user;
+    const invites = await (
+      await interaction.guild.invites.fetch()
+    ).filter(({ inviter }) => inviter && inviter.id === member.id).size;
+
+    interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription(
+            `**${member.username}** has invited **${invites}** people.`
+          )
+          .setColor(colors.main),
+      ],
+    });
+  },
+} as Command;
