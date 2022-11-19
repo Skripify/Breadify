@@ -2,7 +2,7 @@ import { Command } from "../../interfaces/Command";
 import { APIEmbedField, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import fs from "fs";
 import path from "path";
-import { capitalize, importFile } from "../../utils/functions";
+import { capitalize } from "../../utils/functions";
 import { colors } from "../../config";
 
 export default {
