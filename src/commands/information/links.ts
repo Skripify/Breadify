@@ -5,7 +5,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { colors, emotes } from "../../config";
+import { emotes } from "../../config";
 
 export default {
   data: new SlashCommandBuilder()
