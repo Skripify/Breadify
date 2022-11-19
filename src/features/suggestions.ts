@@ -2,7 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, EmbedBuilder } from "discord.js";
 import { colors, emotes } from "../config";
 import { StatusMessages } from "../interfaces/StatusMessages";
 import { Feature } from "../structures/Feature";
-import { YesAndNoButtons } from "../types/YesAndNoButtons";
+import { YesAndNoButtons } from "../utils/YesAndNoButtons";
 
 export const Status: StatusMessages = {
   WAITING: {
