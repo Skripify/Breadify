@@ -1,6 +1,6 @@
 import { Event } from "../structures/Event";
 import logger from "../utils/logger";
-import dbots from "dbots";
+import { Poster } from "dbots";
 import { config } from "../config";
 
 export default new Event("ready", (client) => {
@@ -9,7 +9,7 @@ export default new Event("ready", (client) => {
   client.startTime = Date.now();
 
   if (config.postStats) {
-    const poster = new dbots.Poster({
+    const poster = new Poster({
       client,
       apiKeys: {
         infinitybotlist: process.env.INFINITYBOTS_TOKEN,
