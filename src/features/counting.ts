@@ -33,7 +33,7 @@ export default new Feature((client) => {
       return;
     }
 
-    client.db.set(message.guild.id, message.content, "counting.count");
+    client.db.math(message.guild.id, "+", 1, "counting.count");
     client.db.set(
       message.guild.id,
       message.author.id,
