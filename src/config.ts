@@ -2,6 +2,7 @@ import { Colors, Config, Emotes } from "./interfaces/Config";
 
 export const config: Config = {
   deploySlashGlobally: false,
+  postStats: false,
   guildId: "977485367294959627",
 };
 

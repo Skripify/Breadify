@@ -2,6 +2,7 @@ import { ColorResolvable, EmojiResolvable } from "discord.js";
 
 export interface Config {
   deploySlashGlobally: boolean;
+  postStats: boolean;
   guildId: string;
 }
 
