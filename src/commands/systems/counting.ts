@@ -208,6 +208,7 @@ export default {
               )
               .setColor(colors.fail),
           ],
+          ephemeral: true,
         });
 
       client.db.set(interaction.guild.id, null, "counting.channel");

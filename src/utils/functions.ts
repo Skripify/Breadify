@@ -1,4 +1,10 @@
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  Guild,
+  User,
+} from "discord.js";
 import { emotes } from "../config";
 
 export async function importFile(path: string) {
@@ -28,4 +34,12 @@ export function capitalize(str: string) {
 
 export function truncate(source: string, size: number) {
   return source.length > size ? source.slice(0, size - 1) + "…" : source;
+}
+
+export function replaceVars(message: string, user: User, guild: Guild) {
+  return message
+    .replace("{{user.name}}", user.username)
+    .replace("{{user.discriminator}}", user.discriminator)
+    .replace("{{user.tag}}", user.tag)
+    .replace("{{server.name}}", guild.name);
 }
