@@ -66,7 +66,7 @@ export default new Feature((client) => {
     });
     const entry = logs.entries.first();
 
-    if (entry.executor.id === client.user.id) return;
+    if (entry.target.id === client.user.id) return;
 
     message.channel.send({
       content: `${message.author}: ${message.content}`,

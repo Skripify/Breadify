@@ -1,5 +1,7 @@
 import { Command } from "../../interfaces/Command";
 import {
+  ApplicationCommandOptionType,
+  AuditLogEvent,
   ChannelType,
   EmbedBuilder,
   PermissionFlagsBits,
@@ -55,6 +57,11 @@ export default {
             )
         )
     )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("disable")
+        .setDescription("Disable the counting system.")
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   execute: async ({ client, interaction }) => {
     const group = interaction.options.getSubcommandGroup();
@@ -69,6 +76,24 @@ export default {
     });
 
     if (subcommand === "enable") {
+      if (client.db.get(interaction.guild.id, "counting.channel") !== null)
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `The counting system is already enabled.\nTry using </counting update channel:${
+                  interaction.guild.commands.cache.find(
+                    (x) =>
+                      x.applicationId === client.user.id &&
+                      x.name === "counting"
+                  ).id
+                }> instead.`
+              )
+              .setColor(colors.fail),
+          ],
+          ephemeral: true,
+        });
+
       let channel = interaction.options.getChannel(
         "channel"
       ) as TextBasedChannel;
@@ -171,6 +196,34 @@ export default {
         default:
           break;
       }
+    } else if (subcommand === "disable") {
+      const channel = client.db.get(interaction.guild.id, "counting.channel");
+
+      if (!channel || channel === null)
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                "The counting system isn't set up in this server."
+              )
+              .setColor(colors.fail),
+          ],
+        });
+
+      client.db.set(interaction.guild.id, null, "counting.channel");
+      client.db.set(interaction.guild.id, null, "counting.count");
+      client.db.set(interaction.guild.id, null, "counting.previous_counter");
+
+      interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              `The counting system has successfully been disabled!\nYou can now delete the <#${channel}> channel safely.`
+            )
+            .setColor(colors.success),
+        ],
+        ephemeral: true,
+      });
     }
   },
 } as Command;
