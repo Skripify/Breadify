@@ -20,7 +20,7 @@ export default {
             .setLabel("Invite me!")
             .setStyle(ButtonStyle.Link)
             .setURL(
-              `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot%20applications.commands&permissions=288782`
+              `https://discord.com/oauth2/authorize?client_id=${client.user.id}&scope=bot%20applications.commands&permissions=1099914373180`
             )
         ),
       ],
