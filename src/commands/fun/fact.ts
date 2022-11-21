@@ -10,10 +10,22 @@ export default {
   execute: async ({ interaction }) => {
     interaction.deferReply();
 
-    const f = await fact();
+    try {
+      const f = await fact();
 
-    interaction.followUp({
-      embeds: [new EmbedBuilder().setDescription(f).setColor(colors.main)],
-    });
+      interaction.followUp({
+        embeds: [new EmbedBuilder().setDescription(f).setColor(colors.main)],
+      });
+    } catch (err) {
+      return interaction.followUp({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription(
+              "Something went wrong while trying to fetch a random fact."
+            )
+            .setColor(colors.fail),
+        ],
+      });
+    }
   },
 } as Command;
