@@ -13,6 +13,16 @@ export default {
         .setRequired(false)
     ),
   execute: async ({ interaction }) => {
+    if (!interaction.guild.members.me.permissions.has("ManageGuild"))
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("I don't have permission to view invites.")
+            .setColor(colors.fail),
+        ],
+        ephemeral: true,
+      });
+
     const member = interaction.options.getUser("member") || interaction.user;
     const invites = await (
       await interaction.guild.invites.fetch()
