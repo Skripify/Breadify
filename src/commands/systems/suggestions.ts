@@ -41,23 +41,36 @@ export default {
         .setName("disable")
         .setDescription("Disable the suggestions system.")
     )
-    .addSubcommand((subcommand) =>
-      subcommand
+    .addSubcommandGroup((group) =>
+      group
         .setName("update")
-        .setDescription("Update the settings in the suggestion system.")
-        .addChannelOption((option) =>
-          option
+        .setDescription("Update the suggestions system.")
+        .addSubcommand((subcommand) =>
+          subcommand
             .setName("channel")
-            .setDescription("The channel to set as the suggestion channel.")
-            .setRequired(false)
-        )
-        .addBooleanOption((option) =>
-          option
-            .setName("threads")
-            .setDescription(
-              "Should we automatically create a thread for the suggestion?"
+            .setDescription("Update the suggestions channel.")
+            .addChannelOption((option) =>
+              option
+                .setName("channel")
+                .setDescription(
+                  "The channel to set as the suggestions channel."
+                )
+                .addChannelTypes(ChannelType.GuildText)
+                .setRequired(true)
             )
-            .setRequired(false)
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName("threads")
+            .setDescription("Enable or disable thread creation.")
+            .addBooleanOption((option) =>
+              option
+                .setName("enabled")
+                .setDescription(
+                  "Should we automatically create a thread for the suggestion?"
+                )
+                .setRequired(true)
+            )
         )
     )
     .addSubcommand((subcommand) =>
@@ -82,8 +95,11 @@ export default {
             .setRequired(true)
         )
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   execute: async ({ client, interaction }) => {
+    const group = interaction.options.getSubcommandGroup();
+    const subcommand = interaction.options.getSubcommand();
+
     client.db.ensure(interaction.guild.id, {
       suggestion: {
         channel: null,
@@ -91,11 +107,26 @@ export default {
       },
     });
 
-    const subcommand = interaction.options.getSubcommand();
-
     if (subcommand === "enable") {
       const channel = interaction.options.getChannel("channel");
       const threads = interaction.options.getBoolean("threads") ?? false;
+
+      if (client.db.get(interaction.guild.id, "suggestions.channel") !== null)
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `The suggestions system is already enabled.\nTry using </suggestions update:${
+                  interaction.guild.commands.cache.find(
+                    (x) =>
+                      x.applicationId === client.user.id &&
+                      x.name === "suggestions"
+                  ).id
+                }> instead.`
+              )
+              .setColor(colors.fail),
+          ],
+        });
 
       client.db.set(interaction.guild.id, channel.id, "suggestions.channel");
       client.db.set(interaction.guild.id, threads, "suggestions.threads");
@@ -111,6 +142,23 @@ export default {
         ephemeral: true,
       });
     } else if (subcommand === "disable") {
+      if (client.db.get(interaction.guild.id, "suggestions.channel") === null)
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `The suggestions system isn't enabled.\nTry using </suggestions enable:${
+                  interaction.guild.commands.cache.find(
+                    (x) =>
+                      x.applicationId === client.user.id &&
+                      x.name === "suggestions"
+                  ).id
+                }> instead.`
+              )
+              .setColor(colors.fail),
+          ],
+        });
+
       client.db.set(interaction.guild.id, null, "suggestions.channel");
       client.db.set(interaction.guild.id, false, "suggestions.threads");
 
@@ -124,25 +172,91 @@ export default {
         ],
         ephemeral: true,
       });
-    } else if (subcommand === "update") {
-      const channel = interaction.options.getChannel("channel");
-      const threads = interaction.options.getBoolean("threads");
+    } else if (group === "update") {
+      const data = client.db.get(interaction.guild.id, "welcomer");
 
-      if (channel)
-        client.db.set(interaction.guild.id, channel.id, "suggestions.channel");
-      if (threads)
-        client.db.set(interaction.guild.id, threads, "suggestions.threads");
+      if (data.channel === null)
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `The suggestions system isn't enabled.\nTry using </suggestions enable:${
+                  interaction.guild.commands.cache.find(
+                    (x) =>
+                      x.applicationId === client.user.id &&
+                      x.name === "suggestions"
+                  ).id
+                }> instead.`
+              )
+              .setColor(colors.fail),
+          ],
+        });
 
-      interaction.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setDescription(
-              "The suggestion system has successfully been updated!"
-            )
-            .setColor(colors.success),
-        ],
-        ephemeral: true,
-      });
+      switch (subcommand) {
+        case "channel":
+          {
+            const channel = interaction.options.getChannel("channel");
+            if (!channel)
+              return interaction.reply({
+                embeds: [
+                  new EmbedBuilder()
+                    .setDescription("That channel no longer exists.")
+                    .setColor(colors.fail),
+                ],
+                ephemeral: true,
+              });
+
+            if (data.channel === channel.id)
+              return interaction.reply({
+                embeds: [
+                  new EmbedBuilder()
+                    .setDescription(
+                      "That channel is already set as the suggestions channel."
+                    )
+                    .setColor(colors.fail),
+                ],
+                ephemeral: true,
+              });
+
+            client.db.set(
+              interaction.guild.id,
+              channel.id,
+              "suggestions.channel"
+            );
+
+            interaction.reply({
+              embeds: [
+                new EmbedBuilder()
+                  .setDescription(
+                    `Suggestions channel has successfully been set to ${channel}!`
+                  )
+                  .setColor(colors.success),
+              ],
+              ephemeral: true,
+            });
+          }
+          break;
+        case "threads":
+          {
+            const enabled = interaction.options.getBoolean("enabled");
+
+            client.db.set(interaction.guild.id, enabled, "suggestions.threads");
+
+            interaction.reply({
+              embeds: [
+                new EmbedBuilder()
+                  .setDescription(
+                    `Suggestions threads have succesfully been ${
+                      enabled ? "enabled" : "disabled"
+                    }!`
+                  )
+                  .setColor(colors.success),
+              ],
+              ephemeral: true,
+            });
+          }
+          break;
+      }
     } else if (subcommand === "accept")
       setStatus(client, interaction, Status.ACCEPTED);
     else if (subcommand === "deny")

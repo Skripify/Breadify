@@ -28,8 +28,7 @@ export default new Feature((client) => {
       },
     });
 
-    const channel = client.db.get(message.guild.id, "suggestions.channel");
-    const threads = client.db.get(message.guild.id, "suggestions.channel");
+    const { channel, threads } = client.db.get(message.guild.id, "suggestions");
 
     if (channel && channel === message.channel.id && !message.author.bot) {
       const { channel, member, content } = message;
@@ -86,8 +85,10 @@ export default new Feature((client) => {
     if (!["yes", "no"].includes(i.customId)) return;
 
     client.db.ensure(i.message.id, {
-      poll: false,
-      pollStarter: null,
+      poll: {
+        is_poll: false,
+        starter: null,
+      },
       upvotes: 0,
       downvotes: 0,
       users: {
