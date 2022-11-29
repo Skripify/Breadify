@@ -1,7 +1,5 @@
 import { Command } from "../../interfaces/Command";
 import {
-  ApplicationCommandOptionType,
-  AuditLogEvent,
   ChannelType,
   EmbedBuilder,
   PermissionFlagsBits,
